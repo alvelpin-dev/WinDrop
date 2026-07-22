@@ -1,0 +1,40 @@
+## .NET
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]64/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+artifacts/
+
+## Windows App SDK / MSIX
+AppPackages/
+BundleArtifacts/
+*.appx
+*.appxbundle
+*.msix
+*.msixbundle
+*.pfx
+*.cer
+*.snk
+
+## Rider / VS / VS Code
+.vs/
+.idea/
+.vscode/
+
+## Salidas locales del proyecto
+logs/
+captures/
+*.pcap
+*.pcapng
+
+## SO
+Thumbs.db
+desktop.ini
+.DS_Store
