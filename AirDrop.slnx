@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AirDrop.Core/AirDrop.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AirDrop.Core.Tests/AirDrop.Core.Tests.csproj" />
+  </Folder>
+</Solution>
