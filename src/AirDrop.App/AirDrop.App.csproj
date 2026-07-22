@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- El target 'windows10.0' habilita las APIs WinRT que usa el escáner Bluetooth LE. -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>WinDrop</RootNamespace>
+    <AssemblyName>WinDrop</AssemblyName>
+    <ApplicationIcon></ApplicationIcon>
+
+    <!-- Tema Fluent nativo de WPF: sigue el modo claro/oscuro del sistema. -->
+    <ThemeMode>System</ThemeMode>
+
+    <!--
+      WPF necesita datos de globalización reales: con el modo invariante que hereda la solución,
+      cualquier binding con formato falla al arrancar con "Cannot find non-neutral culture".
+    -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <!-- Publicación como ejecutable portable único. -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <SatelliteResourceLanguages>es;en</SatelliteResourceLanguages>
+
+    <Product>WinDrop</Product>
+    <AssemblyTitle>WinDrop</AssemblyTitle>
+    <Description>Receptor y emisor compatible con el protocolo AirDrop para Windows 11</Description>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      WinForms se usa solo para el icono de bandeja y el selector de carpeta, pero sus usings
+      implícitos chocan con los de WPF (Application, DragEventArgs...). Se quitan y se importa
+      explícitamente donde hace falta.
+    -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AirDrop.Core\AirDrop.Core.csproj" />
+    <ProjectReference Include="..\AirDrop.Client\AirDrop.Client.csproj" />
+    <ProjectReference Include="..\AirDrop.Server\AirDrop.Server.csproj" />
+    <ProjectReference Include="..\AirDrop.Discovery\AirDrop.Discovery.csproj" />
+  </ItemGroup>
+
+</Project>

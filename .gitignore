@@ -34,6 +34,12 @@ captures/
 *.pcap
 *.pcapng
 
+## Ejecutable portable publicado.
+## Se genera con build.ps1 y ocupa ~84 MB. No se versiona: cada recompilación añadiría otro
+## binario completo al historial de git, de forma irreversible. Para distribuirlo, publicarlo
+## como adjunto de una GitHub Release.
+build/
+
 ## SO
 Thumbs.db
 desktop.ini
