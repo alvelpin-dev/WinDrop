@@ -3,7 +3,9 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using AirDrop.Client;
+using AirDrop.Core.Protocol.Ble;
 using AirDrop.Discovery.Mdns;
+using AirDrop.Platform.Windows.Ble;
 using AirDrop.Server;
 using AirDrop.Server.Security;
 using Microsoft.Extensions.Logging;
@@ -28,6 +30,8 @@ public sealed class AirDropService(
     private MdnsResponder? _responder;
     private MdnsBrowser? _browser;
     private UdpMdnsTransport? _browserTransport;
+    private BleAirDropAdvertiser? _bleAdvertiser;
+    private BleAirDropScanner? _bleScanner;
 
     /// <summary>Si el receptor está activo y anunciándose.</summary>
     public bool IsReceiving => _server is not null;
@@ -35,11 +39,20 @@ public sealed class AirDropService(
     /// <summary>Puerto en el que escucha el receptor.</summary>
     public int Port => _server?.Port ?? 0;
 
+    /// <summary>Estado del anuncio Bluetooth.</summary>
+    public AdvertiserState BluetoothState => _bleAdvertiser?.State ?? AdvertiserState.Stopped;
+
     /// <summary>Se dispara cuando aparece o se actualiza un dispositivo en la red.</summary>
     public event Action<DiscoveredReceiver>? DeviceDiscovered;
 
     /// <summary>Se dispara cuando un dispositivo deja de estar disponible.</summary>
     public event Action<string>? DeviceLost;
+
+    /// <summary>Se dispara al detectar por Bluetooth un dispositivo Apple cercano.</summary>
+    public event Action<ContinuityDetection>? AppleDeviceNearby;
+
+    /// <summary>Se dispara cuando cambia el estado del anuncio Bluetooth.</summary>
+    public event Action<AdvertiserState>? BluetoothStateChanged;
 
     /// <summary>Arranca el receptor y empieza a anunciarse por mDNS.</summary>
     public async Task StartReceivingAsync(CancellationToken cancellationToken = default)
@@ -91,15 +104,70 @@ public sealed class AirDropService(
 
         await _responder.StartAsync(cancellationToken).ConfigureAwait(false);
 
+        StartBluetooth();
+
         _logger.LogInformation(
             "Recepción activa como '{Name}' en el puerto {Port}",
             settings.DeviceName,
             _server.Port);
     }
 
+    /// <summary>
+    /// Arranca la capa Bluetooth: emite el anuncio de AirDrop y escucha los ajenos.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// El anuncio BLE es el <b>timbre</b> de AirDrop: avisa a los dispositivos cercanos de que
+    /// hay actividad para que enciendan su AWDL. Se emite porque forma parte del protocolo, pero
+    /// por sí solo no basta para que un iPhone nos encuentre: cuando va a buscar al receptor lo
+    /// hace por AWDL, no por la red normal.
+    /// </para>
+    /// <para>
+    /// El escáner sí aporta algo útil de forma inmediata: permite avisar al usuario de que hay un
+    /// iPhone cerca intentando usar AirDrop, aunque no podamos aparecer en su pantalla.
+    /// </para>
+    /// <para>
+    /// Un fallo aquí no impide recibir: sin Bluetooth el resto del protocolo sigue funcionando
+    /// entre equipos que se descubran por mDNS.
+    /// </para>
+    /// </remarks>
+    private void StartBluetooth()
+    {
+        try
+        {
+            _bleAdvertiser = new BleAirDropAdvertiser(
+                loggerFactory.CreateLogger<BleAirDropAdvertiser>());
+
+            _bleAdvertiser.StateChanged += state => BluetoothStateChanged?.Invoke(state);
+
+            // Sin identidad: los hashes de contacto solo sirven para el filtrado por contactos,
+            // que no soportamos, y emitirlos los expondría a cualquiera que escuche.
+            _bleAdvertiser.Start(AirDropAdvertisement.Anonymous());
+
+            _bleScanner = new BleAirDropScanner(loggerFactory.CreateLogger<BleAirDropScanner>());
+            _bleScanner.AppleDeviceDetected += detection => AppleDeviceNearby?.Invoke(detection);
+            _bleScanner.Start();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo iniciar la capa Bluetooth");
+        }
+    }
+
+    private void StopBluetooth()
+    {
+        _bleAdvertiser?.Dispose();
+        _bleAdvertiser = null;
+
+        _bleScanner?.Dispose();
+        _bleScanner = null;
+    }
+
     /// <summary>Detiene el receptor y retira el anuncio.</summary>
     public async Task StopReceivingAsync()
     {
+        StopBluetooth();
+
         if (_responder is not null)
         {
             await _responder.DisposeAsync().ConfigureAwait(false);

@@ -114,6 +114,26 @@
             </Grid>
           </Border>
 
+          <!-- Estado de la capa Bluetooth. Se muestra porque forma parte del protocolo y
+               conviene que se vea que está funcionando. -->
+          <Border Style="{StaticResource Card}" Margin="0,12,0,0"
+                  Visibility="{Binding HasBluetoothStatus, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#x1F535;" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding BluetoothStatus}" VerticalAlignment="Center" Opacity="0.8" />
+            </StackPanel>
+          </Border>
+
+          <!-- Aviso de iPhone cercano detectado por Bluetooth. -->
+          <Border Style="{StaticResource NoticeCard}" Margin="0,12,0,0"
+                  Visibility="{Binding HasNearbyApple, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#x1F4F1;" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding NearbyAppleStatus}" TextWrapping="Wrap"
+                         VerticalAlignment="Center" MaxWidth="560" />
+            </StackPanel>
+          </Border>
+
           <Border Style="{StaticResource NoticeCard}" Margin="0,16,0,0">
             <StackPanel>
               <TextBlock Text="El iPhone no puede ver este equipo"

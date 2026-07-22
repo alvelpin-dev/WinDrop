@@ -43,6 +43,12 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     private bool _isWebShareActive;
     private string? _webShareUrl;
 
+    private string? _bluetoothStatus;
+    private string? _nearbyAppleStatus;
+
+    /// <summary>Última vez que se vio un iPhone anunciando AirDrop por Bluetooth.</summary>
+    private DateTimeOffset _lastAirDropSighting = DateTimeOffset.MinValue;
+
     public MainViewModel(
         AirDropService airDrop,
         FileReceiver receiver,
@@ -63,6 +69,8 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
         _airDrop.DeviceDiscovered += OnDeviceDiscovered;
         _airDrop.DeviceLost += OnDeviceLost;
+        _airDrop.AppleDeviceNearby += OnAppleDeviceNearby;
+        _airDrop.BluetoothStateChanged += OnBluetoothStateChanged;
         _receiver.TransferCompleted += OnTransferCompleted;
         _receiver.TransferFailed += OnTransferFailed;
         _webShare.FileUploaded += OnWebShareUpload;
@@ -226,6 +234,40 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         private set => SetProperty(ref _webShareUrl, value);
     }
 
+    /// <summary>Estado del anuncio Bluetooth, para mostrarlo en la interfaz.</summary>
+    public string? BluetoothStatus
+    {
+        get => _bluetoothStatus;
+        private set
+        {
+            if (SetProperty(ref _bluetoothStatus, value))
+            {
+                OnPropertyChanged(nameof(HasBluetoothStatus));
+            }
+        }
+    }
+
+    public bool HasBluetoothStatus => !string.IsNullOrEmpty(BluetoothStatus);
+
+    /// <summary>Aviso de que hay un iPhone cerca intentando usar AirDrop.</summary>
+    /// <remarks>
+    /// Es lo más útil que puede hacer la capa Bluetooth aquí: no permite aparecer en la pantalla
+    /// del iPhone, pero sí saber que alguien lo está intentando y ofrecer la alternativa.
+    /// </remarks>
+    public string? NearbyAppleStatus
+    {
+        get => _nearbyAppleStatus;
+        private set
+        {
+            if (SetProperty(ref _nearbyAppleStatus, value))
+            {
+                OnPropertyChanged(nameof(HasNearbyApple));
+            }
+        }
+    }
+
+    public bool HasNearbyApple => !string.IsNullOrEmpty(NearbyAppleStatus);
+
     public AsyncRelayCommand ToggleReceivingCommand { get; }
 
     public AsyncRelayCommand RefreshDevicesCommand { get; }
@@ -385,6 +427,50 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         {
             Application.Current?.Dispatcher.Invoke(() => device.IsResolving = false);
         }
+    }
+
+    private void OnBluetoothStateChanged(AirDrop.Platform.Windows.Ble.AdvertiserState state) =>
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            BluetoothStatus = state switch
+            {
+                AirDrop.Platform.Windows.Ble.AdvertiserState.Started =>
+                    "Bluetooth: emitiendo el anuncio de AirDrop",
+                AirDrop.Platform.Windows.Ble.AdvertiserState.Aborted =>
+                    "Bluetooth: el sistema rechazó el anuncio",
+                AirDrop.Platform.Windows.Ble.AdvertiserState.Unavailable =>
+                    "Bluetooth: no disponible",
+                _ => null,
+            };
+        });
+
+    private void OnAppleDeviceNearby(AirDrop.Platform.Windows.Ble.ContinuityDetection detection)
+    {
+        if (!detection.IsAdvertisingAirDrop)
+        {
+            return;   // el resto de anuncios de Continuity son constantes y no significan nada aquí
+        }
+
+        // Se limita la frecuencia: un iPhone con la hoja abierta emite varias veces por segundo.
+        var now = DateTimeOffset.Now;
+        if (now - _lastAirDropSighting < TimeSpan.FromSeconds(5))
+        {
+            return;
+        }
+
+        _lastAirDropSighting = now;
+
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            NearbyAppleStatus =
+                $"Hay un dispositivo Apple {detection.Proximity} intentando usar AirDrop " +
+                $"({detection.SignalStrength} dBm). No puede vernos: usa la sección iPhone.";
+
+            _logger.LogInformation(
+                "iPhone cercano anunciando AirDrop: {Address:X12} a {Rssi} dBm",
+                detection.Address,
+                detection.SignalStrength);
+        });
     }
 
     private void OnDeviceLost(string id) =>

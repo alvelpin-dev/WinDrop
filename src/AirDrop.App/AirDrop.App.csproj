@@ -54,6 +54,7 @@
     <ProjectReference Include="..\AirDrop.Client\AirDrop.Client.csproj" />
     <ProjectReference Include="..\AirDrop.Server\AirDrop.Server.csproj" />
     <ProjectReference Include="..\AirDrop.Discovery\AirDrop.Discovery.csproj" />
+    <ProjectReference Include="..\AirDrop.Platform.Windows\AirDrop.Platform.Windows.csproj" />
   </ItemGroup>
 
 </Project>

@@ -487,8 +487,8 @@ definitivo sobre una hipótesis sin ejecutar antes su test.**
 
 | # | Test | Qué resuelve | Estado |
 |---|------|--------------|--------|
-| 1 | Publicar advertisement BLE Continuity `0x05` desde Windows y ver si un iPhone reacciona | ¿Windows deja usar el Company ID de Apple? | ⏳ Pendiente |
-| 2 | Escanear con Windows los advertisements BLE de un iPhone al abrir su hoja AirDrop | Valida el parser y el formato del §3.1 | ⏳ Pendiente |
+| 1 | Publicar advertisement BLE Continuity `0x05` desde Windows y ver si un iPhone reacciona | ¿Windows deja usar el Company ID de Apple? | ✅ **Ejecutado** — §9.2 |
+| 2 | Escanear con Windows los advertisements BLE de un iPhone al abrir su hoja AirDrop | Valida el parser y el formato del §3.1 | ✅ **Ejecutado** — §9.2 |
 | 3 | Observar si un dispositivo Apple anuncia `_airdrop._tcp` por Wi-Fi de infraestructura | Confirma §5 y el alcance real de la Ruta A | ✅ **Ejecutado** — §9.1 |
 | 4 | Enviar `/Ask` sin `FileIcon` | ¿Es opcional el JPEG 2000? | ⏳ Pendiente |
 | 5 | Capturar un `/Upload` real y volcar los primeros bytes | ¿CPIO `odc` o `newc`? | ⏳ Pendiente |
@@ -524,6 +524,46 @@ Wi-Fi de infraestructura hacia un iPhone.
 **Nota adicional:** el iPhone reporta `ver=26`, es decir iOS 26, que ya incluye los frameworks
 de Wi-Fi Aware abiertos por la DMA (§7.4). Sigue sin resolver este caso, porque esas APIs
 requieren una app instalada en el iPhone.
+
+### 9.2 Resultado de los tests 1 y 2 — la cadena completa, medida `[CONFIRMADO]`
+
+**Fecha:** 2026-07-22. **Herramientas:** `tools/AirDrop.BleTest`, `tools/AirDrop.MdnsProbe` y la
+propia aplicación con la capa BLE integrada.
+
+Con el iPhone desbloqueado, a menos de un metro, y con la hoja **Compartir → AirDrop** abierta,
+se midió cada eslabón del protocolo:
+
+| # | Eslabón | Resultado |
+|---|---------|-----------|
+| 1 | Windows **emite** el anuncio BLE de AirDrop | ✅ `Anuncio BLE de AirDrop iniciado (22 bytes de datos de fabricante Apple)` |
+| 2 | Windows **recibe** el anuncio BLE del iPhone | ✅ `Dispositivo Apple anunciando AirDrop detectado: 7623B7C39F44 a -40 dBm` |
+| 3 | El iPhone **consulta** `_airdrop._tcp` por la Wi-Fi de infraestructura | ✅ desde `192.168.1.47` y su IPv6 link-local |
+| 4 | Windows **responde** a esa consulta | ✅ PTR + SRV + TXT + A, **por unicast y por multicast**, repetidamente |
+| 5 | El iPhone **se conecta** al puerto 8770 anunciado | ❌ **Nunca.** Cero conexiones entrantes del iPhone |
+| 6 | El iPhone **muestra** el equipo en su pantalla | ❌ **No aparece** |
+
+Identificación del dispositivo consultante: puerto **62078 abierto** (`lockdownd`, servicio
+exclusivo de iOS) y MAC `F2-36-0D-E0-DE-4A` con el bit de administración local activo, es decir
+aleatorizada por privacidad como hace iOS. Es un iPhone, sin ambigüedad.
+
+**Conclusión — este es el resultado decisivo del proyecto:**
+
+> El iPhone **sí pregunta** por AirDrop en la Wi-Fi de infraestructura. Windows **sí le responde**,
+> con registros correctos y bien formados, tanto por unicast como por multicast. Y el iPhone
+> **descarta la respuesta**: no abre ninguna conexión al puerto anunciado y no muestra el
+> dispositivo.
+>
+> La cadena no se rompe por falta de descubrimiento, ni de Bluetooth, ni por un formato mal
+> construido. Se rompe porque **iOS solo considera válidos los receptores alcanzables por su
+> interfaz AWDL**, y descarta lo que llega por cualquier otra.
+
+Esto corrige un matiz de la hipótesis original —se creía que el iPhone ni siquiera preguntaba por
+la red normal, y sí lo hace— pero **refuerza la conclusión del §7**: la barrera es AWDL, y está
+en el lado del iPhone, no en lo que Windows pueda emitir o responder.
+
+**Consecuencia práctica:** no queda ningún eslabón por probar. Todo lo implementable en Windows
+está implementado y verificado funcionando. Lo único que falta es AWDL, y eso exige hardware que
+Windows no puede manejar (§7.2).
 
 ---
 
