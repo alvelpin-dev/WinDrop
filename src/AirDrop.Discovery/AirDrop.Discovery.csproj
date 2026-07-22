@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!--
+      Sin dependencias de Windows a propósito: el códec DNS y el responder mDNS son la pieza más
+      delicada del descubrimiento y deben poder testearse sin hardware ni red real.
+      El BLE, que sí necesita WinRT, vive en AirDrop.Platform.Windows.
+    -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AirDrop.Core\AirDrop.Core.csproj" />
+  </ItemGroup>
+
+</Project>

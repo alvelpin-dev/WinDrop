@@ -1,8 +1,10 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/AirDrop.Core/AirDrop.Core.csproj" />
+    <Project Path="src/AirDrop.Discovery/AirDrop.Discovery.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/AirDrop.Core.Tests/AirDrop.Core.Tests.csproj" />
+    <Project Path="tests/AirDrop.Discovery.Tests/AirDrop.Discovery.Tests.csproj" />
   </Folder>
 </Solution>
