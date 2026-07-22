@@ -3,6 +3,7 @@
     <Project Path="src/AirDrop.Core/AirDrop.Core.csproj" />
     <Project Path="src/AirDrop.Discovery/AirDrop.Discovery.csproj" />
     <Project Path="src/AirDrop.Server/AirDrop.Server.csproj" />
+    <Project Path="src/AirDrop.Client/AirDrop.Client.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/AirDrop.Diagnostics/AirDrop.Diagnostics.csproj" />
@@ -11,5 +12,6 @@
     <Project Path="tests/AirDrop.Core.Tests/AirDrop.Core.Tests.csproj" />
     <Project Path="tests/AirDrop.Discovery.Tests/AirDrop.Discovery.Tests.csproj" />
     <Project Path="tests/AirDrop.Server.Tests/AirDrop.Server.Tests.csproj" />
+    <Project Path="tests/AirDrop.Integration.Tests/AirDrop.Integration.Tests.csproj" />
   </Folder>
 </Solution>
