@@ -485,14 +485,45 @@ o sobre un puente AWDL.
 Todo lo marcado `[POR VERIFICAR]` se resuelve con estos tests. **No se escribe código
 definitivo sobre una hipótesis sin ejecutar antes su test.**
 
-| # | Test | Qué resuelve |
-|---|------|--------------|
-| 1 | Publicar advertisement BLE Continuity `0x05` desde Windows y ver si un iPhone reacciona | ¿Windows deja usar el Company ID de Apple? |
-| 2 | Escanear con Windows los advertisements BLE de un iPhone al abrir su hoja AirDrop | Valida el parser y el formato del §3.1 |
-| 3 | Anunciar `_airdrop._tcp` por Wi-Fi normal y observar si un Mac lo lista | Confirma §5 y el alcance real de la Ruta A |
-| 4 | Enviar `/Ask` sin `FileIcon` | ¿Es opcional el JPEG 2000? |
-| 5 | Capturar un `/Upload` real y volcar los primeros bytes | ¿CPIO `odc` o `newc`? |
-| 6 | `ath9k_htc` bajo WSL2: `iw list` → ¿aparece *active monitor*? | Viabilidad de la Ruta B1 |
+| # | Test | Qué resuelve | Estado |
+|---|------|--------------|--------|
+| 1 | Publicar advertisement BLE Continuity `0x05` desde Windows y ver si un iPhone reacciona | ¿Windows deja usar el Company ID de Apple? | ⏳ Pendiente |
+| 2 | Escanear con Windows los advertisements BLE de un iPhone al abrir su hoja AirDrop | Valida el parser y el formato del §3.1 | ⏳ Pendiente |
+| 3 | Observar si un dispositivo Apple anuncia `_airdrop._tcp` por Wi-Fi de infraestructura | Confirma §5 y el alcance real de la Ruta A | ✅ **Ejecutado** — §9.1 |
+| 4 | Enviar `/Ask` sin `FileIcon` | ¿Es opcional el JPEG 2000? | ⏳ Pendiente |
+| 5 | Capturar un `/Upload` real y volcar los primeros bytes | ¿CPIO `odc` o `newc`? | ⏳ Pendiente |
+| 6 | `ath9k_htc` bajo WSL2: `iw list` → ¿aparece *active monitor*? | Viabilidad de la Ruta B1 | ❌ Descartado — ver [03](03-ALTERNATIVAS-SIN-COSTE.md) |
+
+### 9.1 Resultado del test 3 — `[CONFIRMADO]` con evidencia propia
+
+**Fecha:** 2026-07-22. **Herramienta:** `tools/AirDrop.Diagnostics`, 30 segundos de escucha
+activa con meta-consulta DNS-SD y consulta PTR de AirDrop.
+
+**Entorno:** iPhone (iOS 26) conectado a la misma red Wi-Fi doméstica que el PC Windows,
+desbloqueado y con la hoja de AirDrop abierta.
+
+**Servicios anunciados por el iPhone** (`192.168.1.41`, `iPhone-de-Alvaro.local`):
+
+```
+_remotepairing._tcp     puerto 49152   ver=26, minVer=8, flags=0
+_apple-mobdev2._tcp     puerto 32498   (emparejamiento de dispositivo iOS)
+4c680575._sub._apple-mobdev2._tcp
+```
+
+**`_airdrop._tcp`: NO anunciado.**
+
+**Conclusión.** El iPhone está plenamente activo en la red de infraestructura y anuncia por
+mDNS varios servicios propios de Continuity. Pero **no anuncia AirDrop**, ni siquiera con la
+hoja de compartir abierta. Esto **confirma con datos propios** la conclusión del §7: AirDrop
+se anuncia exclusivamente sobre la interfaz AWDL. No existe una vía de descubrimiento por
+Wi-Fi de infraestructura hacia un iPhone.
+
+> Este test era la última posibilidad de que existiera un atajo que evitara AWDL. No existe.
+> La limitación L1 del §10 queda verificada empíricamente, no solo documentada.
+
+**Nota adicional:** el iPhone reporta `ver=26`, es decir iOS 26, que ya incluye los frameworks
+de Wi-Fi Aware abiertos por la DMA (§7.4). Sigue sin resolver este caso, porque esas APIs
+requieren una app instalada en el iPhone.
 
 ---
 
@@ -502,7 +533,7 @@ Se mantiene actualizado. Nada de esto se disimula en la UI.
 
 | # | Limitación | Causa | ¿Alternativa? |
 |---|-----------|-------|---------------|
-| L1 | **No se puede aparecer en la hoja AirDrop de un iPhone sin hardware adicional** | AWDL: NDIS no permite inyección 802.11 | Ruta B (puente) |
+| L1 | **No se puede aparecer en la hoja AirDrop de un iPhone sin hardware adicional** | AWDL: NDIS no permite inyección 802.11. **Verificado empíricamente**, §9.1 | Ruta B (puente) |
 | L2 | **Modo "Solo contactos" no soportado** | Requiere certificado de Apple ID firmado por Apple | Ninguna legítima. Se deshabilita en la UI. |
 | L3 | Auto-aceptación entre dispositivos del mismo Apple ID no soportada | Cadena de certificados hardware-bound | Ninguna. Siempre habrá confirmación manual. |
 | L4 | **DVZip no soportado** | Formato propietario cerrado de Apple | Se evita no anunciando el flag |
