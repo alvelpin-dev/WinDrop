@@ -4,10 +4,12 @@
     <Project Path="src/AirDrop.Discovery/AirDrop.Discovery.csproj" />
     <Project Path="src/AirDrop.Server/AirDrop.Server.csproj" />
     <Project Path="src/AirDrop.Client/AirDrop.Client.csproj" />
+    <Project Path="src/AirDrop.Platform.Windows/AirDrop.Platform.Windows.csproj" />
     <Project Path="src/AirDrop.App/AirDrop.App.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/AirDrop.Diagnostics/AirDrop.Diagnostics.csproj" />
+    <Project Path="tools/AirDrop.BleTest/AirDrop.BleTest.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/AirDrop.Core.Tests/AirDrop.Core.Tests.csproj" />
